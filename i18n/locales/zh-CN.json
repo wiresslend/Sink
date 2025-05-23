@@ -11,7 +11,9 @@
     "edit": "编辑",
     "delete": "删除",
     "delete_success": "删除成功！",
-    "search": "搜索"
+    "search": "搜索",
+    "favorite": "收藏",
+    "unfavorite": "取消收藏"
   },
   "theme": {
     "toggle": "切换主题",
@@ -158,6 +160,9 @@
     "no_more": "没有更多链接",
     "load_failed": "加载链接失败,",
     "download_qr_code": "下载二维码",
+    "favorited": "已收藏链接",
+    "unfavorited": "已取消收藏链接",
+    "favorite_failed": "更新收藏状态失败",
     "sort": {
       "newest": "最新",
       "oldest": "最旧",

@@ -34,18 +34,31 @@ async function getLinks() {
         cursor,
       },
     })
-    const newLinks = data.links.map(link => ({
-      ...link,
-      isFavorite: link.isFavorite || false,
-    }))
-    links.value = links.value.concat(newLinks).filter(Boolean)
-    cursor = data.cursor
-    listComplete = data.list_complete
-    listError = false
+
+    // 1. Map and ensure isFavorite exists, and filter out any null/undefined links from the API response
+    const allFetchedLinks = data.links
+      .map(link => link ? ({ // Check if link is not null/undefined before spreading
+        ...link,
+        isFavorite: link.isFavorite || false,
+      }) : null)
+      .filter(Boolean); // Removes any nulls that were explicitly returned or resulted from the map
+
+    // 2. Filter these fetched links to only include those where isFavorite is true
+    const favoriteLinks = allFetchedLinks.filter(link => link.isFavorite);
+
+    // 3. Concatenate only the favorite links to your main list
+    if (favoriteLinks.length > 0) {
+      links.value = links.value.concat(favoriteLinks);
+    }
+    
+    cursor = data.cursor;
+    listComplete = data.list_complete;
+    listError = false;
+
   }
   catch (error) {
-    console.error(error)
-    listError = true
+    console.error(error);
+    listError = true;
   }
 }
 
@@ -62,44 +75,50 @@ const { isLoading } = useInfiniteScroll(
 )
 
 async function updateLinkList(link, type) {
-  const index = links.value.findIndex(l => l.id === link.id)
+  const index = links.value.findIndex(l => l.id === link.id);
 
   if (type === 'edit') {
     if (index !== -1) {
-      links.value[index] = { ...links.value[index], ...link }
+      links.value[index] = { ...links.value[index], ...link };
     }
   }
   else if (type === 'delete') {
     if (index !== -1) {
-      links.value.splice(index, 1)
+      links.value.splice(index, 1);
     }
   }
-  else if (type === 'favorite') {
+  else if (type === 'favorite') { // 处理收藏/取消收藏切换
     if (index !== -1) {
-      links.value[index].isFavorite = link.isFavorite // 乐观更新
       try {
-        // 调用新的 favorite API
-        await useAPI(`/api/link/favorite`, { // 确保这是新的端点
-          method: 'POST',                  // 确保方法是 POST
+        const apiResponse = await useAPI(`/api/link/favorite`, {
+          method: 'POST',
           body: {
-            slug: link.slug,               // 发送 slug (或 id)
-            isFavorite: link.isFavorite    // 发送新的 isFavorite 状态
+            slug: link.slug,
+            isFavorite: link.isFavorite // 发送新的期望状态 (例如 false 表示取消收藏)
           }
-        })
-        // 可以取消注释下面的日志或 toast 通知
-        // console.log(`Link ${link.slug} favorite status successfully updated to ${link.isFavorite} via new API`)
-        // toast.success(link.isFavorite ? t('links.favorited') : t('links.unfavorited'), { description: link.slug })
-      }
-      catch (error) {
-        console.error('Failed to update favorite status via API:', error)
-        links.value[index].isFavorite = !link.isFavorite // API 失败，回滚
-        // toast.error(t('links.favorite_failed'), { description: link.slug })
+        });
+
+        if (apiResponse && apiResponse.success && apiResponse.link) {
+          if (!apiResponse.link.isFavorite) {
+            // API 确认链接已取消收藏，则从本收藏夹列表中移除
+            links.value.splice(index, 1);
+          } else {
+            // API 确认链接仍为收藏状态 (或变为收藏状态)，则更新它
+            links.value[index] = { ...links.value[index], ...apiResponse.link };
+          }
+        } else {
+          console.error('收藏状态更新API调用未成功或返回非预期响应。');
+        }
+      } catch (error) {
+        console.error('调用收藏状态更新API失败:', error);
       }
     }
   }
-  else {
-    links.value.unshift({ ...link, isFavorite: false })
-    sortBy.value = 'newest'
+  else { // 创建新链接
+    if (link.isFavorite) { 
+        links.value.unshift({ ...link });
+        sortBy.value = 'newest';
+    } 
   }
 }
 </script>

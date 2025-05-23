@@ -12,6 +12,7 @@ export default eventHandler(async (event) => {
     limit,
     cursor: cursor || undefined,
   })
+  
   if (Array.isArray(list.keys)) {
     list.links = await Promise.all(list.keys.map(async (key: { name: string }) => {
       const { metadata, value: link } = await KV.getWithMetadata(key.name, { type: 'json' })
