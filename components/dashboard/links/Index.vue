@@ -28,24 +28,69 @@ const displayedLinks = computed(() => {
 
 async function getLinks() {
   try {
-    const data = await useAPI('/api/link/list', {
+    const linkListData = await useAPI('/api/link/list', {
       query: {
         limit,
         cursor,
       },
-    })
-    const newLinks = data.links.map(link => ({
-      ...link,
-      isFavorite: link.isFavorite || false,
-    }))
-    links.value = links.value.concat(newLinks).filter(Boolean)
-    cursor = data.cursor
-    listComplete = data.list_complete
-    listError = false
-  }
-  catch (error) {
-    console.error(error)
-    listError = true
+    });
+
+    let processedLinks = (linkListData.links || [])
+      .map(link => link ? ({ // Ensure link is not null before spreading
+        ...link,
+        isFavorite: link.isFavorite || false, // Ensure isFavorite exists
+        visits: 0, // Initialize visits to 0
+      }) : null)
+      .filter(Boolean); // Remove any nulls if link was originally null
+
+    if (processedLinks.length > 0) {
+      const linkIdsForTrafficQuery = processedLinks.map(link => link.id).filter(Boolean); // Assuming link.id exists and is the identifier
+
+      if (linkIdsForTrafficQuery.length > 0) {
+        // Define time range for traffic query (e.g., last 7 days)
+        // Adjust as needed
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const startAtTimestamp = Math.floor(sevenDaysAgo.getTime() / 1000);
+        const endAtTimestamp = Math.floor(now.getTime() / 1000);
+
+        try {
+          const trafficResponse =await useAPI('/api/link/GetTraffic', {
+            method: 'POST',
+            body: {
+              linkIds: linkIdsForTrafficQuery,
+              startAt: startAtTimestamp,
+              endAt: endAtTimestamp,
+            }
+          });
+
+          if (trafficResponse && typeof trafficResponse === 'object') {
+            processedLinks = processedLinks.map(link => {
+              const linkId = link.id;
+              const visitsCount = trafficResponse[linkId];
+              return {
+                ...link,
+                visits: typeof visitsCount === 'number' ? visitsCount : 0,
+              };
+            });
+          } else {
+            console.warn('Traffic API did not return the expected object structure.');
+          }
+
+        } catch (trafficError) {
+          console.error('获取链接流量数据失败 (links/Index.vue):', trafficError);
+        }
+      }
+    } // End of if (processedLinks.length > 0)
+    
+    links.value = links.value.concat(processedLinks);
+    cursor = linkListData.cursor;
+    listComplete = linkListData.list_complete;
+    listError = false;
+
+  } catch (error) {
+    console.error('获取链接列表失败 (links/Index.vue):', error);
+    listError = true;
   }
 }
 

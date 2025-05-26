@@ -28,36 +28,69 @@ const displayedLinks = computed(() => {
 
 async function getLinks() {
   try {
-    const data = await useAPI('/api/link/list', {
+    const linkListData = await useAPI('/api/link/list', {
       query: {
         limit,
         cursor,
       },
-    })
+    });
 
-    // 1. Map and ensure isFavorite exists, and filter out any null/undefined links from the API response
-    const allFetchedLinks = data.links
-      .map(link => link ? ({ // Check if link is not null/undefined before spreading
+    const allFetchedLinks = (linkListData.links || [])
+      .map(link => link ? ({
         ...link,
         isFavorite: link.isFavorite || false,
       }) : null)
-      .filter(Boolean); // Removes any nulls that were explicitly returned or resulted from the map
+      .filter(Boolean);
 
-    // 2. Filter these fetched links to only include those where isFavorite is true
     const favoriteLinks = allFetchedLinks.filter(link => link.isFavorite);
 
-    // 3. Concatenate only the favorite links to your main list
     if (favoriteLinks.length > 0) {
+      const linkIdsForTrafficQuery = favoriteLinks.map(link => link.id).filter(Boolean);
+
+      if (linkIdsForTrafficQuery.length > 0) {
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const startAtTimestamp = Math.floor(sevenDaysAgo.getTime() / 1000);
+        const endAtTimestamp = Math.floor(now.getTime() / 1000);
+
+        try {
+          const trafficResponse = await useAPI('/api/link/GetTraffic', {
+            method: 'POST',
+            body: {
+              linkIds: linkIdsForTrafficQuery,
+              startAt: startAtTimestamp,
+              endAt: endAtTimestamp,
+            }
+          });
+
+          favoriteLinks.forEach(link => {
+            const visitsCount = trafficResponse[link.id];
+            link.visits = typeof visitsCount === 'number' ? visitsCount : 0;
+          });
+          console.log(favoriteLinks);
+          
+        } catch (trafficError) {
+          console.error('获取收藏链接的流量数据失败:', trafficError);
+          favoriteLinks.forEach(link => {
+            link.visits = 0;
+          });
+        }
+      } else {
+         favoriteLinks.forEach(link => {
+            link.visits = 0;
+          });
+      }
+      
       links.value = links.value.concat(favoriteLinks);
     }
     
-    cursor = data.cursor;
-    listComplete = data.list_complete;
+    cursor = linkListData.cursor;
+    listComplete = linkListData.list_complete;
     listError = false;
 
   }
   catch (error) {
-    console.error(error);
+    console.error('获取链接列表失败:', error);
     listError = true;
   }
 }
