@@ -109,7 +109,6 @@ function toggleFavorite() {
         >
           <LinkIcon class="w-5 h-5" />
         </a>
-
         <Star
           class="w-5 h-5 cursor-pointer"
           :class="{ 'text-yellow-500 fill-yellow-500': link.isFavorite }"
@@ -201,10 +200,10 @@ function toggleFavorite() {
         <Separator orientation="vertical" />
         <span class="truncate">{{ link.url }}</span>
       </div>
-      <div class="flex w-full h-5 space-x-2 text-sm">
+      <div v-if="typeof link.visits === 'number'" class="flex w-full h-5 space-x-2 text-sm mt-1">
         <span>visits:</span>
         <Separator orientation="vertical" />
-        <span class="truncate">{{ link.visits}}</span>
+        <span class="truncate">{{ link.visits }}</span>
       </div>
     </NuxtLink>
   </Card>

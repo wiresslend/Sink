@@ -110,6 +110,12 @@ function toggleFavorite() {
           <LinkIcon class="w-5 h-5" />
         </a>
 
+        <Star
+          class="w-5 h-5 cursor-pointer"
+          :class="{ 'text-yellow-500 fill-yellow-500': link.isFavorite }"
+          @click.prevent="toggleFavorite"
+        />
+
         <Popover>
           <PopoverTrigger>
             <QrCode
@@ -149,19 +155,6 @@ function toggleFavorite() {
                 {{ $t('common.edit') }}
               </div>
             </DashboardLinksEditor>
-
-            <Separator />
-
-            <div
-              class="cursor-pointer flex select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
-              @click="toggleFavorite"
-            >
-              <Star
-                class="w-5 h-5 mr-2"
-                :class="{ 'text-yellow-500 fill-yellow-500': link.isFavorite }"
-              />
-              {{ link.isFavorite ? $t('common.unfavorite') : $t('common.favorite') }}
-            </div>
 
             <Separator />
 
@@ -207,6 +200,11 @@ function toggleFavorite() {
         </template>
         <Separator orientation="vertical" />
         <span class="truncate">{{ link.url }}</span>
+      </div>
+      <div class="flex w-full h-5 space-x-2 text-sm">
+        <span>visits:</span>
+        <Separator orientation="vertical" />
+        <span class="truncate">{{ link.visits}}</span>
       </div>
     </NuxtLink>
   </Card>

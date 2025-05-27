@@ -167,7 +167,7 @@ async function updateLinkList(link, type) {
       <LazyDashboardLinksSearch />
     </div>
     <section class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <DashboardLinksLink
+      <DashboardFavoriteLink
         v-for="link in displayedLinks"
         :key="link.id"
         :link="link"
