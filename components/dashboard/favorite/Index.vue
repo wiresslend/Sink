@@ -67,7 +67,6 @@ async function getLinks() {
             const visitsCount = trafficResponse[link.id];
             link.visits = typeof visitsCount === 'number' ? visitsCount : 0;
           });
-          console.log(favoriteLinks);
           
         } catch (trafficError) {
           console.error('获取收藏链接的流量数据失败:', trafficError);

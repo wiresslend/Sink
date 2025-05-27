@@ -43,7 +43,12 @@ export default eventHandler(async (event: H3Event) => {
   await Promise.all(body.linkIds.map(async (linkId) => {
     let visits = 0;
     try {
-      const sqlFilter = `link_identifier = '${linkId.replace(/'/g, "''")}' AND eventTimestamp >= toDateTime(${body.startAt}) AND eventTimestamp <= toDateTime(${body.endAt})`; // 基本的 SQL 注入防范
+      // 使用从 Counters API 确认的正确字段名
+      const correctLinkIdentifierField = 'index1'; 
+      const correctTimestampField = 'timestamp';    
+      const safeLinkId = linkId.replace(/'/g, "''"); 
+
+      const sqlFilter = `${correctLinkIdentifierField} = '${safeLinkId}' AND ${correctTimestampField} >= toDateTime(${body.startAt}) AND ${correctTimestampField} <= toDateTime(${body.endAt})`;
       const visitsSql = `SELECT SUM(_sample_interval) as visits FROM ${dataset} WHERE ${sqlFilter}`;
       
       const waeResponse = await useWAE(event, visitsSql) as WAEResponse; 

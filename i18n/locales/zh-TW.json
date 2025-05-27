@@ -11,9 +11,7 @@
       "edit": "編輯",
       "delete": "刪除",
       "delete_success": "刪除成功！",
-      "search": "搜尋",
-      "favorite": "收藏",
-      "unfavorite": "取消收藏"
+      "search": "搜尋"
     },
     "theme": {
       "toggle": "切換主题",

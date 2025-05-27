@@ -11,9 +11,7 @@
     "edit": "Edit",
     "delete": "Delete",
     "delete_success": "Delete successful!",
-    "search": "Search",
-    "favorite": "Favorite",
-    "unfavorite": "Unfavorite"
+    "search": "Search"
   },
   "theme": {
     "toggle": "Toggle theme",
